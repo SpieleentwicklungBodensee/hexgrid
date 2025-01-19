@@ -54,4 +54,6 @@ while running:
                 BRIGHTNESS = min(BRIGHTNESS + 1, 0)
                 ledwall.setBrightnessValue(BRIGHTNESS)
                 #EventTimer.set('brightness-msg', 60)
+            elif e.key == pygame.K_F11:
+                pygame.display.toggle_fullscreen()
                 
