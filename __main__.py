@@ -40,11 +40,40 @@ HEX_HEIGHT = 8
 clock = pygame.time.Clock()
 tick = 0
 
+def initGrid(width, height):
+    d = {}
+
+    def addSegment(x1, y1, x2, y2, color):
+        index = (x1, y1, x2, y2)
+        d[index] = color
+
+    for y in range(height):
+        for x in range(width):
+            addSegment(x, y, x, y+1, (0, 128, 0))
+
+            if y % 4 == 0:
+                addSegment(x, y, x-1, y+1, (0, 128, 255))
+            elif y % 4 == 2:
+                addSegment(x, y, x+1, y+1, (255, 0, 128))
+
+    return d
+
+
+grid = initGrid(GRID_WIDTH, GRID_HEIGHT)
+
 
 while running:
     output.fill((0, 0, 0))
 
     gridcolor = ledwall.brightness((0, 128 + ((tick * 2) % 128) if (tick * 2) % 256 < 128 else (255 - ((tick * 2) % 128)), 0))
+
+    for segment, color in grid.items():
+        x1, y1, x2, y2 = segment
+
+        x1 += 0 if y1 % 4 in (0, 3) else 0.5
+        x2 += 0 if y2 % 4 in (0, 3) else 0.5
+
+        pygame.draw.line(output, color, (x1 * HEX_WIDTH, y1 * HEX_HEIGHT), (x2 * HEX_WIDTH, y2 * HEX_HEIGHT))
 
     for y in range(GRID_HEIGHT):
         for x in range(GRID_WIDTH):
@@ -58,20 +87,6 @@ while running:
                     py = y * HEX_HEIGHT
 
                 return px, py
-
-            px1, py1 = getCoords(x, y)
-            px2, py2 = getCoords(x, y+1)
-            pygame.draw.line(output, gridcolor, (px1, py1), (px2, py2))
-
-            if y % 4 == 0:
-                px1, py1 = getCoords(x, y)
-                px2, py2 = getCoords(x-1, y+1)
-                pygame.draw.line(output, gridcolor, (px1, py1), (px2, py2))
-
-            if y % 4 == 2:
-                px1, py1 = getCoords(x, y)
-                px2, py2 = getCoords(x+1, y+1)
-                pygame.draw.line(output, gridcolor, (px1, py1), (px2, py2))
 
     ledwall.font_huge.centerText(output, 'HEXGRID', y=2, fgcolor=ledwall.brightness((0, 255, 0)))
     ledwall.compose()
