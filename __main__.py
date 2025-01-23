@@ -47,49 +47,70 @@ def initGrid(width, height):
         index = (x1, y1, x2, y2)
         d[index] = color
 
+    defaultColor = (64, 64, 64)
+
     for y in range(height):
         for x in range(width):
-            addSegment(x, y, x, y+1, (0, 128, 0))
+            addSegment(x, y, x, y+1, defaultColor)
 
             if y % 4 == 0:
-                addSegment(x, y, x-1, y+1, (0, 128, 255))
+                addSegment(x, y, x-1, y+1, defaultColor)
             elif y % 4 == 2:
-                addSegment(x, y, x+1, y+1, (255, 0, 128))
+                addSegment(x, y, x+1, y+1, defaultColor)
 
     return d
 
+def setSegmentColor(pointFrom, pointTo, color):
+    points = sorted((pointFrom, pointTo))
+    index = (points[0][0], points[0][1], points[1][0], points[1][1])
+    grid[index] = color
+
+
+def getScreenCoords(x, y):
+    if y % 4 == 0 or y % 4 == 3:
+        px = x * HEX_WIDTH
+        py = y * HEX_HEIGHT
+    else:
+        px = (x + 0.5) * HEX_WIDTH
+        py = y * HEX_HEIGHT
+
+    return px, py
+
 
 grid = initGrid(GRID_WIDTH, GRID_HEIGHT)
+
+playerX = 4
+playerY = 12
 
 
 while running:
     output.fill((0, 0, 0))
 
-    gridcolor = ledwall.brightness((0, 128 + ((tick * 2) % 128) if (tick * 2) % 256 < 128 else (255 - ((tick * 2) % 128)), 0))
+    # draw grid
 
     for segment, color in grid.items():
         x1, y1, x2, y2 = segment
 
-        x1 += 0 if y1 % 4 in (0, 3) else 0.5
-        x2 += 0 if y2 % 4 in (0, 3) else 0.5
+        x1, y1 = getScreenCoords(x1, y1)
+        x2, y2 = getScreenCoords(x2, y2)
 
-        pygame.draw.line(output, color, (x1 * HEX_WIDTH, y1 * HEX_HEIGHT), (x2 * HEX_WIDTH, y2 * HEX_HEIGHT))
+        pygame.draw.line(output, color, (x1, y1), (x2, y2))
 
-    for y in range(GRID_HEIGHT):
-        for x in range(GRID_WIDTH):
 
-            def getCoords(x, y):
-                if y % 4 == 0 or y % 4 == 3:
-                    px = x * HEX_WIDTH
-                    py = y * HEX_HEIGHT
-                else:
-                    px = (x + 0.5) * HEX_WIDTH
-                    py = y * HEX_HEIGHT
+    # draw player
 
-                return px, py
+    pygame.draw.circle(output, (0, 255, 0), getScreenCoords(playerX, playerY), radius=2, width=1)
+
+
+    # draw logo
 
     ledwall.font_huge.centerText(output, 'HEXGRID', y=2, fgcolor=ledwall.brightness((0, 255, 0)))
     ledwall.compose()
+
+
+    # event handling
+
+    oldx, oldy = playerX, playerY
 
     events = pygame.event.get()
 
@@ -112,6 +133,39 @@ while running:
                 ledwall.enableOverlay(not ledwall.showOverlay)
             elif e.key == pygame.K_F11:
                 pygame.display.toggle_fullscreen()
+
+            elif e.key == pygame.K_LEFT:
+                if playerY % 4 == 0:
+                    playerX -= 1
+                    playerY += 1
+                elif playerY % 4 == 1:
+                    playerY -= 1
+                elif playerY % 4 == 2:
+                    playerY += 1
+                elif playerY % 4 == 3:
+                    playerY -= 1
+                    playerX -= 1
+
+            elif e.key == pygame.K_RIGHT:
+                if playerY % 4 == 0:
+                    playerY += 1
+                elif playerY % 4 == 1:
+                    playerX += 1
+                    playerY -= 1
+                elif playerY % 4 == 2:
+                    playerY += 1
+                    playerX += 1
+                elif playerY % 4 == 3:
+                    playerY -= 1
+
+            elif e.key == pygame.K_UP:
+                playerY -= 1
+
+            elif e.key == pygame.K_DOWN:
+                playerY += 1
+
+    if oldx != playerX or oldy != playerY:
+        setSegmentColor((oldx, oldy), (playerX, playerY), (0, 255, 0))
 
     clock.tick(60)
     tick += 1
