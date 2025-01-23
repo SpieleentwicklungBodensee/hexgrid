@@ -94,12 +94,12 @@ while running:
         x1, y1 = getScreenCoords(x1, y1)
         x2, y2 = getScreenCoords(x2, y2)
 
-        pygame.draw.line(output, color, (x1, y1), (x2, y2))
+        pygame.draw.line(output, ledwall.brightness(color), (x1, y1), (x2, y2))
 
 
     # draw player
 
-    pygame.draw.circle(output, (0, 255, 0), getScreenCoords(playerX, playerY), radius=2, width=1)
+    pygame.draw.circle(output, ledwall.brightness((0, 255, 0)), getScreenCoords(playerX, playerY), radius=2, width=1)
 
 
     # draw logo
