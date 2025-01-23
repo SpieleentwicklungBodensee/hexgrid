@@ -10,6 +10,7 @@ scaled = None   # scale surface to distort output
 overlay = None  # vertical masking stripes
 
 brightnessValue = -4
+showOverlay = True
 
 renderMode = 'led'
 
@@ -49,10 +50,14 @@ def compose():
     elif renderMode == 'led':
         pygame.transform.scale(output, (SCR_W * 2, SCR_H), scaled)
         window.blit(scaled, (0, 0))
-        window.blit(overlay, (0, 0))
+        if showOverlay:
+            window.blit(overlay, (0, 0))
 
     pygame.display.flip()
     
+def enableOverlay(flag=True):
+    global showOverlay
+    showOverlay = flag
 
 def setBrightnessValue(b):
     global brightnessValue
