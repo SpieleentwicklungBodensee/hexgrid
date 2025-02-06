@@ -315,7 +315,5 @@ while running:
         if player.dist >= 1.0:
             player.turn()
 
-        break
-
     clock.tick(60)
     tick += 1
