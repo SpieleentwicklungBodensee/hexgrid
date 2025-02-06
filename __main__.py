@@ -230,8 +230,8 @@ class Player:
 
         self.dist = 0
 
-player1 = Player(0+6, 0+13, color=PLAYER_COLORS[0])
-player2 = Player(GRID_WIDTH - 2, GRID_HEIGHT - 12, color=PLAYER_COLORS[1])
+player1 = Player(4, 12, color=PLAYER_COLORS[0])
+player2 = Player(GRID_WIDTH - 4, GRID_HEIGHT - 12, color=PLAYER_COLORS[1])
 
 players = [player1, player2]
 
