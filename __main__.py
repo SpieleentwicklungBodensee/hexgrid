@@ -250,6 +250,8 @@ while running:
         pygame.draw.line(output, ledwall.brightness(color), (x1, y1), (x2, y2))
 
 
+    px, py = getScreenCoords(playerX, playerY)
+
     # draw players
 
     for player in players:
