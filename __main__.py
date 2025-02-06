@@ -220,8 +220,6 @@ class Player:
                     dirx = 0
                     diry = -1
 
-        print(line)
-
         self.x = self.nextx
         self.y = self.nexty
 
