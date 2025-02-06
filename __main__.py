@@ -250,7 +250,6 @@ while running:
         pygame.draw.line(output, ledwall.brightness(color), (x1, y1), (x2, y2))
 
 
-    px, py = getScreenCoords(playerX, playerY)
 
     # draw players
 
@@ -261,7 +260,8 @@ while running:
         x = oldx + (newx - oldx) * player.dist
         y = oldy + (newy - oldy) * player.dist
 
-        pygame.draw.circle(output, ledwall.brightness(player.color), (x, y), radius=2, width=1)
+        #pygame.draw.circle(output, ledwall.brightness(player.color), (x, y), radius=2, width=1)
+        pygame.draw.ellipse(output, ledwall.brightness(player.color), rect=(x-2, y-2, 5, 5))
 
     # draw logo
 
