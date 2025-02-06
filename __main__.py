@@ -34,8 +34,15 @@ ledwall.setBrightnessValue(BRIGHTNESS)
 GRID_HEIGHT = 40
 GRID_WIDTH = 11
 
-HEX_WIDTH = 24
-HEX_HEIGHT = 8
+HEX_WIDTH = 24*1
+HEX_HEIGHT = 24#28#27.7/4.0*1
+
+PLAYER_COLORS = [(0, 255, 0),
+                 (255, 0, 255),
+                 (0, 128, 255),
+                 (255, 255, 0)
+                 ]
+
 
 clock = pygame.time.Clock()
 tick = 0
@@ -67,20 +74,166 @@ def setSegmentColor(pointFrom, pointTo, color):
 
 
 def getScreenCoords(x, y):
-    if y % 4 == 0 or y % 4 == 3:
+    if int(y) % 4 in (0, 3):
         px = x * HEX_WIDTH
-        py = y * HEX_HEIGHT
+        py = y * HEX_HEIGHT / 3.
     else:
         px = (x + 0.5) * HEX_WIDTH
-        py = y * HEX_HEIGHT
+        py = y * HEX_HEIGHT / 3.
 
     return px, py
 
 
 grid = initGrid(GRID_WIDTH, GRID_HEIGHT)
 
-playerX = 4
-playerY = 12
+
+class Player:
+    def __init__(self, x, y, color=(255, 255, 255)):
+        self.x = x
+        self.y = y
+
+        self.nextx = x
+        self.nexty = y + 1
+
+        self.dist = 0
+        self.nextdir = 1
+        self.speed = 1.0 / 32
+
+        self.color = color
+
+    def turn(self):
+
+        #x=0 : x=1   : x=2
+        #    :       :
+        #    : |     :
+        #    :/ \    :/         y=0
+        # \ /:    \ /:
+        #  | :     | .          y=1
+        #  | :     | .
+        #  | :     |            y=2
+        # / \:    / \
+        #    :\ /               y=3
+        #    : |
+
+        line = self.nexty % 4   # y-line of target (=current) point
+
+        setSegmentColor((self.x, self.y), (self.nextx, self.nexty), self.color)
+
+        downwards = self.nexty - self.y > 0     # whether player came to current point by going down or not
+        rightside = self.nextx == self.x        # whether player was traveling on the right half of the hexagon (including middle - see sketch)
+
+        if self.nextdir == -1:  # turn left
+            if line == 0:
+                if downwards:
+                    dirx = 0
+                    diry = 1
+                else:
+                    if rightside:
+                        dirx = -1
+                        diry = 1
+                    else:
+                        dirx = 0
+                        diry = -1
+
+            elif line == 1:
+                if downwards:
+                    if rightside:
+                        dirx = 1
+                        diry = -1
+                    else:
+                        dirx = 0
+                        diry = 1
+                else:
+                    dirx = 0
+                    diry = -1
+
+            elif line == 2:
+                if downwards:
+                    dirx = 1
+                    diry = 1
+                else:
+                    if rightside:
+                        dirx = 0
+                        diry = -1
+                    else:
+                        dirx = 0
+                        diry = 1
+
+            elif line == 3:
+                if downwards:
+                    if rightside:
+                        dirx = 0
+                        diry = 1
+                    else:
+                        dirx = 0
+                        diry = -1
+                else:
+                    dirx = -1
+                    diry = -1
+
+        elif self.nextdir == 1: # turn right
+            if line == 0:
+                if downwards:
+                    dirx = -1
+                    diry = 1
+                else:
+                    if rightside:
+                        dirx = 0
+                        diry = -1
+                    else:
+                        dirx = 0
+                        diry = 1
+
+            elif line == 1:
+                if downwards:
+                    if rightside:
+                        dirx = 0
+                        diry = 1
+                    else:
+                        dirx = 0
+                        diry = -1
+                else:
+                    dirx = 1
+                    diry = -1
+
+            elif line == 2:
+                if downwards:
+                    dirx = 0
+                    diry = 1
+                else:
+                    if rightside:
+                        dirx = 1
+                        diry = 1
+                    else:
+                        dirx = 0
+                        diry = -1
+
+            elif line == 3:
+                if downwards:
+                    if rightside:
+                        dirx = -1
+                        diry = -1
+                    else:
+                        dirx = 0
+                        diry = 1
+                else:
+                    dirx = 0
+                    diry = -1
+
+        print(line)
+
+        self.x = self.nextx
+        self.y = self.nexty
+
+        self.nextx += dirx
+        self.nexty += diry
+
+        self.dist = 0
+
+player1 = Player(0+6, 0+13, color=PLAYER_COLORS[0])
+player2 = Player(GRID_WIDTH - 2, GRID_HEIGHT - 12, color=PLAYER_COLORS[1])
+
+players = [player1, player2]
 
 
 while running:
@@ -97,10 +250,16 @@ while running:
         pygame.draw.line(output, ledwall.brightness(color), (x1, y1), (x2, y2))
 
 
-    # draw player
+    # draw players
 
-    pygame.draw.circle(output, ledwall.brightness((0, 255, 0)), getScreenCoords(playerX, playerY), radius=2, width=1)
+    for player in players:
+        oldx, oldy = getScreenCoords(player.x, player.y)
+        newx, newy = getScreenCoords(player.nextx, player.nexty)
 
+        x = oldx + (newx - oldx) * player.dist
+        y = oldy + (newy - oldy) * player.dist
+
+        pygame.draw.circle(output, ledwall.brightness(player.color), (x, y), radius=2, width=1)
 
     # draw logo
 
@@ -110,7 +269,7 @@ while running:
 
     # event handling
 
-    oldx, oldy = playerX, playerY
+    #oldx, oldy = playerX, playerY
 
     events = pygame.event.get()
 
@@ -135,37 +294,26 @@ while running:
                 pygame.display.toggle_fullscreen()
 
             elif e.key == pygame.K_LEFT:
-                if playerY % 4 == 0:
-                    playerX -= 1
-                    playerY += 1
-                elif playerY % 4 == 1:
-                    playerY -= 1
-                elif playerY % 4 == 2:
-                    playerY += 1
-                elif playerY % 4 == 3:
-                    playerY -= 1
-                    playerX -= 1
+                player1.nextdir = -1
 
             elif e.key == pygame.K_RIGHT:
-                if playerY % 4 == 0:
-                    playerY += 1
-                elif playerY % 4 == 1:
-                    playerX += 1
-                    playerY -= 1
-                elif playerY % 4 == 2:
-                    playerY += 1
-                    playerX += 1
-                elif playerY % 4 == 3:
-                    playerY -= 1
+                player1.nextdir = 1
 
-            elif e.key == pygame.K_UP:
-                playerY -= 1
+            elif e.key == pygame.K_a:
+                player2.nextdir = -1
 
-            elif e.key == pygame.K_DOWN:
-                playerY += 1
+            elif e.key == pygame.K_d:
+                player2.nextdir = 1
 
-    if oldx != playerX or oldy != playerY:
-        setSegmentColor((oldx, oldy), (playerX, playerY), (0, 255, 0))
+    # update players
+
+    for player in players:
+        player.dist += player.speed
+
+        if player.dist >= 1.0:
+            player.turn()
+
+        break
 
     clock.tick(60)
     tick += 1
