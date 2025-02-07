@@ -16,17 +16,29 @@ renderMode = 'led'
 
 pygame.display.init()
 
+fonts = {}
+fontFilename = 'gfx/heimatfont.png'
+fontCharsize = (8, 8)
+lastFontColor = (255, 255, 255)
 
-font = BitmapFont('gfx/heimatfont.png', scr_w=SCR_W, scr_h=SCR_H)
-font_big = BitmapFont('gfx/heimatfont.png', zoom=2, scr_w=SCR_W, scr_h=SCR_H)
-font_huge = BitmapFont('gfx/heimatfont.png', zoom=3, scr_w=SCR_W, scr_h=SCR_H)
+printMessages = []
 
+_originalPrintFunction = print
+
+def initFont(filename, char_w=8, char_h=8, zoom=1):
+    fonts[zoom] = BitmapFont(filename, scr_w=SCR_W, scr_h=SCR_H, font_w=char_w, font_h=char_h, zoom=zoom)
+
+for i in range(1, 3):
+    initFont(fontFilename, fontCharsize[0], fontCharsize[1], zoom=i)
+
+
+# -- screen handling and composing
 
 def initScreen(mode='led'):
     global window, output, scaled, overlay, renderMode
-    
+
     renderMode = mode
-    
+
     if renderMode == 'led':
         window = pygame.display.set_mode((1920, 1080), flags=pygame.FULLSCREEN)
         output = pygame.Surface((SCR_W, SCR_H))
@@ -35,18 +47,21 @@ def initScreen(mode='led'):
 
         for x in range(SCR_W):
             pygame.draw.line(overlay, (0, 0, 0), (x * 2, 0), (x * 2, SCR_H))
-        
+
     elif renderMode == 'plain':
         window = pygame.display.set_mode((SCR_W, SCR_H), flags=pygame.SCALED)
         output = window
-        
-    return output
-    
 
-def compose():
+    return output
+
+def compose(do_cls=False):
+    _drawPrintLog()
+    if do_cls:
+        cls()
+
     if renderMode == 'plain':
         pass
-        
+
     elif renderMode == 'led':
         pygame.transform.scale(output, (SCR_W * 2, SCR_H), scaled)
         window.blit(scaled, (0, 0))
@@ -54,7 +69,7 @@ def compose():
             window.blit(overlay, (0, 0))
 
     pygame.display.flip()
-    
+
 def enableOverlay(flag=True):
     global showOverlay
     showOverlay = flag
@@ -62,6 +77,9 @@ def enableOverlay(flag=True):
 def setBrightnessValue(b):
     global brightnessValue
     brightnessValue = b
+
+
+# -- color conversion
 
 def gamma(v):
     return min(v * 2**(brightnessValue / 4), 255)
@@ -74,5 +92,59 @@ def brightness(color):
             result.append(tuple([gamma(c) for c in co]))
         return result
     return tuple([gamma(c) for c in color])
-    
-    
+
+
+# -- text drawing using the bitmapfont
+
+def drawText(text, x=None, y=None, color=None, fontsize=1, center=False):
+    global lastFontColor
+
+    if not fontsize in fonts:
+        initFont(fontFilename, fontCharsize[0], fontCharsize[1], fontsize)
+
+    font = fonts[fontsize]
+
+    if color is None:
+        color = lastFontColor
+    lastFontColor = color
+
+    color = brightness(color)
+
+    if center:
+        font.centerText(output, text, y=y, fgcolor=color)
+    else:
+        font.drawText(output, text, x=x, y=y, fgcolor=color)
+
+def centerText(text, y=None, color=None, fontsize=1):
+    drawText(text, y=y, color=color, fontsize=fontsize, center=True)
+
+def print(*args):
+    text = ' '.join([str(arg) for arg in args])
+    lines = text.split('\n')
+
+    charsPerLine = SCR_W // fonts[1].font_w
+
+    for line in lines:
+        while len(line) > 0:
+            printMessages.append(line[:charsPerLine])
+            line = line[charsPerLine:]
+
+    _originalPrintFunction(*args)
+
+def cls():
+    printMessages.clear()
+
+def _drawPrintLog():
+    global lastFontColor
+
+    font = fonts[1]
+    maxlines = SCR_H // font.font_h
+
+    font.locate(0, 0)
+
+    colorBackup = lastFontColor
+
+    for line in printMessages[-maxlines:]:
+        drawText(line.upper(), color=(192, 192, 192))
+
+    lastFontColor = colorBackup

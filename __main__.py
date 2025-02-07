@@ -2,6 +2,8 @@ import pygame
 import time
 
 import ledwall
+print = ledwall.print
+
 
 # read settings from settings.py
 # use default values if no settings.py exists
@@ -258,13 +260,12 @@ while running:
         x = oldx + (newx - oldx) * player.dist
         y = oldy + (newy - oldy) * player.dist
 
-        #pygame.draw.circle(output, ledwall.brightness(player.color), (x, y), radius=2, width=1)
         pygame.draw.ellipse(output, ledwall.brightness(player.color), rect=(x-2, y-2, 5, 5))
 
     # draw logo
 
-    ledwall.font_huge.centerText(output, 'HEXGRID', y=2, fgcolor=ledwall.brightness((0, 255, 0)))
-    ledwall.compose()
+    ledwall.centerText('HEXGRID', y=2, color=(0, 255, 0), fontsize=3)
+    ledwall.compose(do_cls=True)
 
 
     # event handling
@@ -315,3 +316,6 @@ while running:
 
     clock.tick(60)
     tick += 1
+
+    print('tick =', tick)
+
