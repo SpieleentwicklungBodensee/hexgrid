@@ -270,8 +270,6 @@ while running:
 
     # event handling
 
-    #oldx, oldy = playerX, playerY
-
     events = pygame.event.get()
 
     for e in events:
