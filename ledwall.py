@@ -26,7 +26,7 @@ printMessages = []
 _originalPrintFunction = print
 
 def initFont(filename, char_w=8, char_h=8, zoom=1):
-    fonts[zoom] = BitmapFont(filename, scr_w=SCR_W, scr_h=SCR_H, font_w=char_w, font_h=char_h, zoom=zoom)
+    fonts[zoom] = BitmapFont(filename, scr_w=SCR_W, scr_h=SCR_H, char_w=char_w, char_h=char_h, zoom=zoom)
 
 for i in range(1, 3):
     initFont(fontFilename, fontCharsize[0], fontCharsize[1], zoom=i)
@@ -122,7 +122,7 @@ def print(*args):
     text = ' '.join([str(arg) for arg in args])
     lines = text.split('\n')
 
-    charsPerLine = SCR_W // fonts[1].font_w
+    charsPerLine = SCR_W // fonts[1].char_w
 
     for line in lines:
         while len(line) > 0:
@@ -138,7 +138,7 @@ def _drawPrintLog():
     global lastFontColor
 
     font = fonts[1]
-    maxlines = SCR_H // font.font_h
+    maxlines = SCR_H // font.char_h
 
     font.locate(0, 0)
 
