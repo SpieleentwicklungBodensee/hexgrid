@@ -125,6 +125,9 @@ def print(*args):
     charsPerLine = SCR_W // fonts[1].char_w
 
     for line in lines:
+        if not line:
+            printMessages.append('')
+            continue
         while len(line) > 0:
             printMessages.append(line[:charsPerLine])
             line = line[charsPerLine:]
