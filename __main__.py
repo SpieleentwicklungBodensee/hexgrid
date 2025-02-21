@@ -101,6 +101,9 @@ class Player:
         self.nextdir = 1
         self.speed = 1.0 / 32
 
+        self.racecar = False
+        self.target_right_left_down_up = (True, False, False, False)
+
         self.color = color
 
     def turn(self):
@@ -124,103 +127,136 @@ class Player:
         downwards = self.nexty - self.y > 0     # whether player came to current point by going down or not
         rightside = self.nextx == self.x        # whether player was traveling on the right half of the hexagon (including middle - see sketch)
 
-        if self.nextdir == -1:  # turn left
-            if line == 0:
-                if downwards:
-                    dirx = 0
-                    diry = 1
-                else:
-                    if rightside:
-                        dirx = -1
+        if not self.racecar:
+
+            neighbours = [(self.nextx, self.nexty-1), (self.nextx, self.nexty+1)]
+            if   line == 0: neighbours.append((self.nextx-1, self.nexty+1))
+            elif line == 1: neighbours.append((self.nextx+1, self.nexty-1))
+            elif line == 2: neighbours.append((self.nextx+1, self.nexty+1))
+            else:           neighbours.append((self.nextx-1, self.nexty-1))
+            neighbours.remove((self.x, self.y)) # no going back
+            neighboursScreenCoords=[]
+            for neighbour in neighbours:
+                neighbour_x, neighbour_y = getScreenCoords(neighbour[0], neighbour[1])
+                neighboursScreenCoords.append((neighbour_x, neighbour_y))
+            i0_right = neighboursScreenCoords[0][0] > neighboursScreenCoords[1][0]
+            i0_left  = neighboursScreenCoords[0][0] < neighboursScreenCoords[1][0]
+            i0_down  = neighboursScreenCoords[0][1] > neighboursScreenCoords[1][1]
+            i0_up    = neighboursScreenCoords[0][1] < neighboursScreenCoords[1][1]
+            if self.target_right_left_down_up[0]:
+                if i0_right: neighbour_i = 0
+                else:        neighbour_i = 1
+            elif self.target_right_left_down_up[1]:
+                if i0_left:  neighbour_i = 0
+                else:        neighbour_i = 1
+            elif self.target_right_left_down_up[2]:
+                if i0_down:  neighbour_i = 0
+                else:        neighbour_i = 1
+            else: # self.target_right_left_down_up[3]
+                if i0_up:    neighbour_i = 0
+                else:        neighbour_i = 1
+            dirx = neighbours[neighbour_i][0] - self.nextx
+            diry = neighbours[neighbour_i][1] - self.nexty
+
+        else: # self.racecar
+
+            if self.nextdir == -1:  # turn left
+                if line == 0:
+                    if downwards:
+                        dirx = 0
                         diry = 1
+                    else:
+                        if rightside:
+                            dirx = -1
+                            diry = 1
+                        else:
+                            dirx = 0
+                            diry = -1
+
+                elif line == 1:
+                    if downwards:
+                        if rightside:
+                            dirx = 1
+                            diry = -1
+                        else:
+                            dirx = 0
+                            diry = 1
                     else:
                         dirx = 0
                         diry = -1
 
-            elif line == 1:
-                if downwards:
-                    if rightside:
-                        dirx = 1
-                        diry = -1
-                    else:
-                        dirx = 0
-                        diry = 1
-                else:
-                    dirx = 0
-                    diry = -1
-
-            elif line == 2:
-                if downwards:
-                    dirx = 1
-                    diry = 1
-                else:
-                    if rightside:
-                        dirx = 0
-                        diry = -1
-                    else:
-                        dirx = 0
-                        diry = 1
-
-            elif line == 3:
-                if downwards:
-                    if rightside:
-                        dirx = 0
-                        diry = 1
-                    else:
-                        dirx = 0
-                        diry = -1
-                else:
-                    dirx = -1
-                    diry = -1
-
-        elif self.nextdir == 1: # turn right
-            if line == 0:
-                if downwards:
-                    dirx = -1
-                    diry = 1
-                else:
-                    if rightside:
-                        dirx = 0
-                        diry = -1
-                    else:
-                        dirx = 0
-                        diry = 1
-
-            elif line == 1:
-                if downwards:
-                    if rightside:
-                        dirx = 0
-                        diry = 1
-                    else:
-                        dirx = 0
-                        diry = -1
-                else:
-                    dirx = 1
-                    diry = -1
-
-            elif line == 2:
-                if downwards:
-                    dirx = 0
-                    diry = 1
-                else:
-                    if rightside:
+                elif line == 2:
+                    if downwards:
                         dirx = 1
                         diry = 1
                     else:
-                        dirx = 0
-                        diry = -1
+                        if rightside:
+                            dirx = 0
+                            diry = -1
+                        else:
+                            dirx = 0
+                            diry = 1
 
-            elif line == 3:
-                if downwards:
-                    if rightside:
+                elif line == 3:
+                    if downwards:
+                        if rightside:
+                            dirx = 0
+                            diry = 1
+                        else:
+                            dirx = 0
+                            diry = -1
+                    else:
                         dirx = -1
                         diry = -1
+
+            elif self.nextdir == 1: # turn right
+                if line == 0:
+                    if downwards:
+                        dirx = -1
+                        diry = 1
                     else:
+                        if rightside:
+                            dirx = 0
+                            diry = -1
+                        else:
+                            dirx = 0
+                            diry = 1
+
+                elif line == 1:
+                    if downwards:
+                        if rightside:
+                            dirx = 0
+                            diry = 1
+                        else:
+                            dirx = 0
+                            diry = -1
+                    else:
+                        dirx = 1
+                        diry = -1
+
+                elif line == 2:
+                    if downwards:
                         dirx = 0
                         diry = 1
-                else:
-                    dirx = 0
-                    diry = -1
+                    else:
+                        if rightside:
+                            dirx = 1
+                            diry = 1
+                        else:
+                            dirx = 0
+                            diry = -1
+
+                elif line == 3:
+                    if downwards:
+                        if rightside:
+                            dirx = -1
+                            diry = -1
+                        else:
+                            dirx = 0
+                            diry = 1
+                    else:
+                        dirx = 0
+                        diry = -1
 
         self.x = self.nextx
         self.y = self.nexty
@@ -294,15 +330,31 @@ while running:
 
             elif e.key == pygame.K_LEFT:
                 player1.nextdir = -1
+                player1.target_right_left_down_up = (False, True, False, False)
 
             elif e.key == pygame.K_RIGHT:
                 player1.nextdir = 1
+                player1.target_right_left_down_up = (True, False, False, False)
+
+            elif e.key == pygame.K_UP:
+                player1.target_right_left_down_up = (False, False, False, True)
+
+            elif e.key == pygame.K_DOWN:
+                player1.target_right_left_down_up = (False, False, True, False)
 
             elif e.key == pygame.K_a:
                 player2.nextdir = -1
+                player2.target_right_left_down_up = (False, True, False, False)
 
             elif e.key == pygame.K_d:
                 player2.nextdir = 1
+                player2.target_right_left_down_up = (True, False, False, False)
+
+            elif e.key == pygame.K_w:
+                player2.target_right_left_down_up = (False, False, False, True)
+
+            elif e.key == pygame.K_s:
+                player2.target_right_left_down_up = (False, False, True, False)
 
     # update players
 
