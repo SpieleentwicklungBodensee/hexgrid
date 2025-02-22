@@ -141,6 +141,8 @@ class Player:
         self.nextdir = 1        # for racecar steering only
         self.speed = 1.0 / 32
 
+        self.idle = True
+
         self.racecar = False
         self.input_right_left_down_up = [False, False, False, False]
         self.target_right_left_down_up = [True, False, False, False]
@@ -151,16 +153,20 @@ class Player:
     def pressLeft(self):
         self.nextdir = -1
         self.input_right_left_down_up[1] = True
+        self.idle = False
 
     def pressRight(self):
         self.nextdir = 1
         self.input_right_left_down_up[0] = True
+        self.idle = False
 
     def pressUp(self):
         self.input_right_left_down_up[3] = True
+        self.idle = False
 
     def pressDown(self):
         self.input_right_left_down_up[2] = True
+        self.idle = False
 
     def pressDirection(self, d):
         (self.pressRight,
@@ -393,7 +399,9 @@ while running:
 
     # draw logo
 
-    ledwall.centerText('HEXGRID', y=2, color=(0, 255, 0), fontsize=3)
+    if tick % 32 < 24 and tick < 60 * 2:
+        ledwall.centerText('HEXGRID', y=2, color=(0, 255, 0), fontsize=3)
+
     ledwall.compose(do_cls=False)
 
 
@@ -492,12 +500,16 @@ while running:
     for player in players:
         if True in player.input_right_left_down_up: player.target_right_left_down_up = list(player.input_right_left_down_up)
 
-        player.dist += player.speed
-        if player.dist >= 1.0:
-            player.turn()
+        if not player.idle:
+            player.dist += player.speed
+            if player.dist >= 1.0:
+                player.turn()
 
     clock.tick(60)
     tick += 1
+
+    if tick >= 60 * 4:
+        ledwall.cls()
 
     #print('tick =', tick)
 
