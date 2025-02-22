@@ -1,4 +1,5 @@
 import pygame
+import pygame._sdl2.controller
 import time
 
 from enum import Enum
@@ -28,11 +29,38 @@ if not 'DEFAULT_BRIGHTNESS' in dir():
     else:
         BRIGHTNESS = 0
 
+DEADZONE = 0.4
 
 running = True
 output = ledwall.initScreen(RENDER_MODE)
 
 ledwall.setBrightnessValue(BRIGHTNESS)
+
+
+print('init game controllers...')
+pygame._sdl2.controller.init()
+joymode = None
+
+if not pygame._sdl2.controller.get_count():
+    print('no controllers detected')
+else:
+    joymode = 'controller'
+    print('found controllers:')
+    for i in range(pygame._sdl2.controller.get_count()):
+        joy = pygame._sdl2.controller.Controller(i)
+        print(' - ' + joy.as_joystick().get_name())
+
+if not joymode:    # use joystick lib as fallback
+    pygame.joystick.init()
+    if not pygame.joystick.get_count():
+        print('no joystick detected')
+    else:
+        joymode = 'joystick'
+        print('found joysticks:')
+        for i in range(pygame.joystick.get_count()):
+            joy = pygame.joystick.Joystick(i)
+            joy.init()
+            print(' - ' + joy.get_name())
 
 
 GRID_HEIGHT = 40
@@ -366,7 +394,7 @@ while running:
     # draw logo
 
     ledwall.centerText('HEXGRID', y=2, color=(0, 255, 0), fontsize=3)
-    ledwall.compose(do_cls=True)
+    ledwall.compose(do_cls=False)
 
 
     # event handling
@@ -405,6 +433,60 @@ while running:
                         if e.key == key:
                             players[p].releaseDirection(d)
 
+        elif e.type == pygame.CONTROLLERAXISMOTION and joymode == 'controller':
+            value = max(-1, e.value / 32767)
+            p = e.instance_id
+
+            if e.axis == pygame.CONTROLLER_AXIS_LEFTX:
+                if value < 0:
+                    if value < -DEADZONE:
+                        players[p].pressLeft()
+                    else:
+                        players[p].releaseLeft()
+                else:
+                    if value > DEADZONE:
+                        players[p].pressRight()
+                    else:
+                        players[p].releaseRight()
+            elif e.axis == pygame.CONTROLLER_AXIS_LEFTY:
+                if value < 0:
+                    if value < -DEADZONE:
+                        players[p].pressUp()
+                    else:
+                        players[p].releaseUp()
+                else:
+                    if value > DEADZONE:
+                        players[p].pressDown()
+                    else:
+                        players[p].releaseDown()
+
+        elif e.type == pygame.CONTROLLERBUTTONDOWN and joymode == 'controller':
+            p = e.instance_id
+
+            if e.button in (pygame.CONTROLLER_BUTTON_A, pygame.CONTROLLER_BUTTON_B, pygame.CONTROLLER_BUTTON_X, pygame.CONTROLLER_BUTTON_Y):
+                pass
+
+            elif e.button == pygame.CONTROLLER_BUTTON_DPAD_LEFT:
+                players[p].pressLeft()
+            elif e.button == pygame.CONTROLLER_BUTTON_DPAD_RIGHT:
+                players[p].pressRight()
+            elif e.button == pygame.CONTROLLER_BUTTON_DPAD_UP:
+                players[p].pressUp()
+            elif e.button == pygame.CONTROLLER_BUTTON_DPAD_DOWN:
+                players[p].pressDown()
+
+        elif e.type == pygame.CONTROLLERBUTTONUP and joymode == 'controller':
+            p = e.instance_id
+
+            if e.button == pygame.CONTROLLER_BUTTON_DPAD_LEFT:
+                players[p].releaseLeft()
+            elif e.button == pygame.CONTROLLER_BUTTON_DPAD_RIGHT:
+                players[p].releaseRight()
+            elif e.button == pygame.CONTROLLER_BUTTON_DPAD_UP:
+                players[p].releaseUp()
+            elif e.button == pygame.CONTROLLER_BUTTON_DPAD_DOWN:
+                players[p].releaseDown()
+
     # update players
 
     for player in players:
@@ -417,5 +499,5 @@ while running:
     clock.tick(60)
     tick += 1
 
-    print('tick =', tick)
+    #print('tick =', tick)
 
