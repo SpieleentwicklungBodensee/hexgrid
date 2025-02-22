@@ -102,7 +102,8 @@ class Player:
         self.speed = 1.0 / 32
 
         self.racecar = False
-        self.target_right_left_down_up = (True, False, False, False)
+        self.input_right_left_down_up = [False, False, False, False]
+        self.target_right_left_down_up = [True, False, False, False]
 
         self.color = color
 
@@ -134,27 +135,38 @@ class Player:
             elif line == 1: neighbours.append((self.nextx+1, self.nexty-1))
             elif line == 2: neighbours.append((self.nextx+1, self.nexty+1))
             else:           neighbours.append((self.nextx-1, self.nexty-1))
-            neighbours.remove((self.x, self.y)) # no going back
-            neighboursScreenCoords=[]
-            for neighbour in neighbours:
-                neighbour_x, neighbour_y = getScreenCoords(neighbour[0], neighbour[1])
-                neighboursScreenCoords.append((neighbour_x, neighbour_y))
-            i0_right = neighboursScreenCoords[0][0] > neighboursScreenCoords[1][0]
-            i0_left  = neighboursScreenCoords[0][0] < neighboursScreenCoords[1][0]
-            i0_down  = neighboursScreenCoords[0][1] > neighboursScreenCoords[1][1]
-            i0_up    = neighboursScreenCoords[0][1] < neighboursScreenCoords[1][1]
-            if self.target_right_left_down_up[0]:
-                if i0_right: neighbour_i = 0
-                else:        neighbour_i = 1
-            elif self.target_right_left_down_up[1]:
-                if i0_left:  neighbour_i = 0
-                else:        neighbour_i = 1
-            elif self.target_right_left_down_up[2]:
-                if i0_down:  neighbour_i = 0
-                else:        neighbour_i = 1
-            else: # self.target_right_left_down_up[3]
-                if i0_up:    neighbour_i = 0
-                else:        neighbour_i = 1
+            neighbours.remove((self.x, self.y))
+
+            nextxScreenCoord, nextyScreenCoord = getScreenCoords(self.nextx, self.nexty)
+            i0_right = getScreenCoords(neighbours[0][0], neighbours[0][1])[0] > nextxScreenCoord
+            i0_left  = getScreenCoords(neighbours[0][0], neighbours[0][1])[0] < nextxScreenCoord
+            i0_down  = getScreenCoords(neighbours[0][0], neighbours[0][1])[1] > nextyScreenCoord
+            i0_up    = getScreenCoords(neighbours[0][0], neighbours[0][1])[1] < nextyScreenCoord
+            i1_right = getScreenCoords(neighbours[1][0], neighbours[1][1])[0] > nextxScreenCoord
+            i1_left  = getScreenCoords(neighbours[1][0], neighbours[1][1])[0] < nextxScreenCoord
+            i1_down  = getScreenCoords(neighbours[1][0], neighbours[1][1])[1] > nextyScreenCoord
+            i1_up    = getScreenCoords(neighbours[1][0], neighbours[1][1])[1] < nextyScreenCoord
+
+            i0_score = 0
+            if self.target_right_left_down_up[0] and i0_right: i0_score += 1
+            if self.target_right_left_down_up[1] and i0_left: i0_score += 1
+            if self.target_right_left_down_up[2] and i0_down: i0_score += 1
+            if self.target_right_left_down_up[3] and i0_up: i0_score += 1
+            if self.target_right_left_down_up[0] and i0_left: i0_score -= 1
+            if self.target_right_left_down_up[1] and i0_right: i0_score -= 1
+            if self.target_right_left_down_up[2] and i0_up: i0_score -= 1
+            if self.target_right_left_down_up[3] and i0_down: i0_score -= 1
+            i1_score = 0
+            if self.target_right_left_down_up[0] and i1_right: i1_score += 1
+            if self.target_right_left_down_up[1] and i1_left: i1_score += 1
+            if self.target_right_left_down_up[2] and i1_down: i1_score += 1
+            if self.target_right_left_down_up[3] and i1_up: i1_score += 1
+            if self.target_right_left_down_up[0] and i1_left: i1_score -= 1
+            if self.target_right_left_down_up[1] and i1_right: i1_score -= 1
+            if self.target_right_left_down_up[2] and i1_up: i1_score -= 1
+            if self.target_right_left_down_up[3] and i1_down: i1_score -= 1
+            neighbour_i = 0 if i0_score > i1_score else 1
+
             dirx = neighbours[neighbour_i][0] - self.nextx
             diry = neighbours[neighbour_i][1] - self.nexty
 
@@ -330,37 +342,52 @@ while running:
 
             elif e.key == pygame.K_LEFT:
                 player1.nextdir = -1
-                player1.target_right_left_down_up = (False, True, False, False)
-
+                player1.input_right_left_down_up[1] = True
             elif e.key == pygame.K_RIGHT:
                 player1.nextdir = 1
-                player1.target_right_left_down_up = (True, False, False, False)
-
+                player1.input_right_left_down_up[0] = True
             elif e.key == pygame.K_UP:
-                player1.target_right_left_down_up = (False, False, False, True)
-
+                player1.input_right_left_down_up[3] = True
             elif e.key == pygame.K_DOWN:
-                player1.target_right_left_down_up = (False, False, True, False)
+                player1.input_right_left_down_up[2] = True
 
             elif e.key == pygame.K_a:
                 player2.nextdir = -1
-                player2.target_right_left_down_up = (False, True, False, False)
-
+                player2.input_right_left_down_up[1] = True
             elif e.key == pygame.K_d:
                 player2.nextdir = 1
-                player2.target_right_left_down_up = (True, False, False, False)
-
+                player2.input_right_left_down_up[0] = True
             elif e.key == pygame.K_w:
-                player2.target_right_left_down_up = (False, False, False, True)
-
+                player2.input_right_left_down_up[3] = True
             elif e.key == pygame.K_s:
-                player2.target_right_left_down_up = (False, False, True, False)
+                player2.input_right_left_down_up[2] = True
+
+        elif e.type == pygame.KEYUP:
+
+            if e.key == pygame.K_LEFT:
+                player1.input_right_left_down_up[1] = False
+            elif e.key == pygame.K_RIGHT:
+                player1.input_right_left_down_up[0] = False
+            elif e.key == pygame.K_UP:
+                player1.input_right_left_down_up[3] = False
+            elif e.key == pygame.K_DOWN:
+                player1.input_right_left_down_up[2] = False
+
+            elif e.key == pygame.K_a:
+                player2.input_right_left_down_up[1] = False
+            elif e.key == pygame.K_d:
+                player2.input_right_left_down_up[0] = False
+            elif e.key == pygame.K_w:
+                player2.input_right_left_down_up[3] = False
+            elif e.key == pygame.K_s:
+                player2.input_right_left_down_up[2] = False
 
     # update players
 
     for player in players:
-        player.dist += player.speed
+        if True in player.input_right_left_down_up: player.target_right_left_down_up = list(player.input_right_left_down_up)
 
+        player.dist += player.speed
         if player.dist >= 1.0:
             player.turn()
 
