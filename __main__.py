@@ -1,6 +1,8 @@
 import pygame
 import time
 
+from enum import Enum
+
 import ledwall
 print = ledwall.print
 
@@ -44,6 +46,16 @@ PLAYER_COLORS = [(0, 255, 0),
                  (0, 128, 255),
                  (255, 255, 0)
                  ]
+
+class Direction(Enum):  # currently unused
+    RIGHT = 0
+    LEFT = 1
+    DOWN = 2
+    UP = 3
+
+playerKeys = [(pygame.K_RIGHT, pygame.K_LEFT, pygame.K_DOWN, pygame.K_UP),
+              (pygame.K_d, pygame.K_a, pygame.K_s, pygame.K_w),
+              ]
 
 
 clock = pygame.time.Clock()
@@ -98,7 +110,7 @@ class Player:
         self.nexty = y + 1
 
         self.dist = 0
-        self.nextdir = 1
+        self.nextdir = 1        # for racecar steering only
         self.speed = 1.0 / 32
 
         self.racecar = False
@@ -106,6 +118,47 @@ class Player:
         self.target_right_left_down_up = [True, False, False, False]
 
         self.color = color
+
+
+    def pressLeft(self):
+        self.nextdir = -1
+        self.input_right_left_down_up[1] = True
+
+    def pressRight(self):
+        self.nextdir = 1
+        self.input_right_left_down_up[0] = True
+
+    def pressUp(self):
+        self.input_right_left_down_up[3] = True
+
+    def pressDown(self):
+        self.input_right_left_down_up[2] = True
+
+    def pressDirection(self, d):
+        (self.pressRight,
+         self.pressLeft,
+         self.pressDown,
+         self.pressUp)[d]()
+
+
+    def releaseLeft(self):
+        self.input_right_left_down_up[1] = False
+
+    def releaseRight(self):
+        self.input_right_left_down_up[0] = False
+
+    def releaseUp(self):
+        self.input_right_left_down_up[3] = False
+
+    def releaseDown(self):
+        self.input_right_left_down_up[2] = False
+
+    def releaseDirection(self, d):
+        (self.releaseRight,
+         self.releaseLeft,
+         self.releaseDown,
+         self.releaseUp)[d]()
+
 
     def turn(self):
 
@@ -340,47 +393,17 @@ while running:
             elif e.key == pygame.K_F11:
                 pygame.display.toggle_fullscreen()
 
-            elif e.key == pygame.K_LEFT:
-                player1.nextdir = -1
-                player1.input_right_left_down_up[1] = True
-            elif e.key == pygame.K_RIGHT:
-                player1.nextdir = 1
-                player1.input_right_left_down_up[0] = True
-            elif e.key == pygame.K_UP:
-                player1.input_right_left_down_up[3] = True
-            elif e.key == pygame.K_DOWN:
-                player1.input_right_left_down_up[2] = True
-
-            elif e.key == pygame.K_a:
-                player2.nextdir = -1
-                player2.input_right_left_down_up[1] = True
-            elif e.key == pygame.K_d:
-                player2.nextdir = 1
-                player2.input_right_left_down_up[0] = True
-            elif e.key == pygame.K_w:
-                player2.input_right_left_down_up[3] = True
-            elif e.key == pygame.K_s:
-                player2.input_right_left_down_up[2] = True
+            else:
+                for p, keys in enumerate(playerKeys):
+                    for d, key in enumerate(keys):
+                        if e.key == key:
+                            players[p].pressDirection(d)
 
         elif e.type == pygame.KEYUP:
-
-            if e.key == pygame.K_LEFT:
-                player1.input_right_left_down_up[1] = False
-            elif e.key == pygame.K_RIGHT:
-                player1.input_right_left_down_up[0] = False
-            elif e.key == pygame.K_UP:
-                player1.input_right_left_down_up[3] = False
-            elif e.key == pygame.K_DOWN:
-                player1.input_right_left_down_up[2] = False
-
-            elif e.key == pygame.K_a:
-                player2.input_right_left_down_up[1] = False
-            elif e.key == pygame.K_d:
-                player2.input_right_left_down_up[0] = False
-            elif e.key == pygame.K_w:
-                player2.input_right_left_down_up[3] = False
-            elif e.key == pygame.K_s:
-                player2.input_right_left_down_up[2] = False
+                for p, keys in enumerate(playerKeys):
+                    for d, key in enumerate(keys):
+                        if e.key == key:
+                            players[p].releaseDirection(d)
 
     # update players
 
